@@ -9,7 +9,7 @@ window.AARR_CONFIG = {
 
   // رابط الدفع: ضع هنا رابط Payhip أو Gumroad أو CMI الخاص بك لتفعيل الزر.
   // اتركه فارغاً — سيعرض الموقع تلقائياً خيار "سجّل الآن وستصلك الدعوة للشراء أولاً".
-  buyUrl: "",
+  buyUrl: "https://elghribi1.gumroad.com/l/lqiqlp",
 
   productPriceMAD: 99,
   productName: "حزمة الذكاء الاصطناعي للمستقل المغربي",
