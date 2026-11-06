@@ -7,8 +7,7 @@ window.AARR_CONFIG = {
   supabaseUrl: "https://rdendsijoowivydpvqho.supabase.co",
   supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkZW5kc2lqb293aXZ5ZHB2cWhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MzA0OTgsImV4cCI6MjEwOTUwNjQ5OH0.10g6kculQN91EC_OY0i1lSSaGQOTf85x84bs180Fw9M",
 
-  // رابط الدفع: ضع هنا رابط Payhip أو Gumroad أو CMI الخاص بك لتفعيل الزر.
-  // اتركه فارغاً — سيعرض الموقع تلقائياً خيار "سجّل الآن وستصلك الدعوة للشراء أولاً".
+  // رابط الدفع (Gumroad) — صفحة المنتج: حزمة الذكاء الاصطناعي للمستقل المغربي
   buyUrl: "https://elghribi1.gumroad.com/l/lqiqlp",
 
   productPriceMAD: 99,
