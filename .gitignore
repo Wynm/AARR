@@ -1,0 +1,19 @@
+# أسرار محلية — لا تُرفع أبداً
+.env
+.env.*
+!.env.example
+*.local
+secrets.*
+.service_role*
+
+# نظام التشغيل والمحررات
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# مخرجات توليد
+node_modules/
+dist/
+*.pdf
+!product/*.pdf

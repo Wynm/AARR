@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>لوحة العمليات — AARR | آفاق الربح الرقمي</title>
+<meta name="robots" content="noindex,nofollow" />
+<meta name="theme-color" content="#0a1d1c" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Amiri:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body class="dash-body">
+
+<header class="dash-nav">
+  <div class="container">
+    <a class="brand" href="index.html" style="color:#f4d98c"><span class="brand-mark">ع</span><span><b style="color:#f4d98c">لوحة عمليات AARR</b><small style="color:#8fb3ad">المبيعات • العملاء • المالية — مكان واحد</small></span></a>
+    <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+      <a href="index.html">← الواجهة العامة</a>
+      <button class="btn btn-gold btn-sm" id="exportAllBtn">⬇ نسخ احتياطي JSON</button>
+    </div>
+  </div>
+</header>
+
+<main class="dash-main">
+
+  <!-- تنبيهات تشغيلية -->
+  <div class="notice">⚠️ هذه اللوحة تحفظ البيانات <b>محلياً على هذا الجهاز</b> (localStorage) مع إمكانية المزامنة اليدوية مع Supabase. قبل مسح بيانات المتصفح أو تغيير الجهاز: صدّر نسخة احتياطية JSON أولاً.</div>
+
+  <!-- ربط Supabase بالمفتاح الخدمي (اختياري) -->
+  <div class="panel">
+    <h2>🔐 المزامنة مع Supabase <span id="syncState" class="badge-status st-new">غير مربوطة</span></h2>
+    <p style="font-size:.85rem;color:#9fb8b5;margin-bottom:.6rem">للقراءة الحية للعملاء من القاعدة، الصق المفتاح الخدمي (service_role) — يُحفظ في ذاكرة هذه الجلسة فقط ولا يُكتب في أي ملف:</p>
+    <div class="row-form">
+      <input type="password" id="serviceKey" placeholder="service_role key (جلسة حالية فقط)" style="min-width:280px;flex:1" dir="ltr" />
+      <button class="btn btn-gold btn-sm" id="connectSyncBtn">ربط وقراءة العملاء</button>
+      <button class="btn btn-danger btn-sm" id="disconnectSyncBtn">إلغاء الربط</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="dash-grid">
+    <div class="kpi"><small>عملاء محتملون (محلي + مزامنة)</small><div class="v" id="kLeads">0</div><div class="s" id="kLeadsToday">+0 اليوم</div></div>
+    <div class="kpi"><small>صفقات مفتوحة في الخط</small><div class="v" id="kPipeline">0</div><div class="s">حسب خط الأنابيب بالأسفل</div></div>
+    <div class="kpi"><small>إيرادات مسجلة</small><div class="v" id="kRevenue">0 د.م</div><div class="s">من الدفتر المالي بالأسفل</div></div>
+    <div class="kpi"><small>معدل إغلاق الصفقات</small><div class="v" id="kCloseRate">0%</div><div class="s">مغلقة ÷ مجموع المغلقة + الخاسرة</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="overview">📊 نظرة عامة</button>
+    <button class="tab" data-tab="leads">👥 العملاء المحتملون</button>
+    <button class="tab" data-tab="finance">📒 الدفتر المالي</button>
+    <button class="tab" data-tab="pipeline">🧲 خط الأنابيب</button>
+    <button class="tab" data-tab="kpi">🎯 مؤشرات الإطلاق</button>
+  </div>
+
+  <!-- ===== نظرة عامة ===== -->
+  <section class="panel" id="tab-overview" data-panel>
+    <h2>الأداء آخر 6 أشهر (الدفتر المالي)</h2>
+    <canvas class="chart" id="chartFinance" width="900" height="230" role="img" aria-label="رسم بياني للإيرادات والمصاريف"></canvas>
+    <div class="note" style="margin-top:.8rem">المنهجية: الإيراد = إجمالي «وارد» في الدفتر. المصاريف = إجمالي «صادر». الأرقام محلية؛ للمراجعة النهائية استعمل Google Sheets (AARR — سجل المالية والمؤشرات) كمصدر حقيقة واحد.</div>
+  </section>
+
+  <!-- ===== العملاء ===== -->
+  <section class="panel" id="tab-leads" data-panel hidden>
+    <h2>العملاء المحتملون
+      <span style="display:flex;gap:.4rem">
+        <button class="btn btn-gold btn-sm" id="exportLeadsCsvBtn">⬇ CSV</button>
+        <button class="btn btn-danger btn-sm" id="clearLocalBtn">مسح المحلي</button>
+      </span>
+    </h2>
+    <div class="row-form">
+      <input id="leadSearch" placeholder="ابحث بالاسم أو البريد…" style="flex:1;min-width:220px" />
+      <input id="manualName" placeholder="اسم (إضافة يدوية)" />
+      <input id="manualEmail" type="email" placeholder="بريد" dir="ltr" />
+      <button class="btn btn-gold btn-sm" id="addManualLeadBtn">+ إضافة</button>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>التاريخ</th><th>الاسم</th><th>البريد</th><th>واتساب</th><th>المصدر</th><th>الحالة</th><th></th></tr></thead>
+        <tbody id="leadsTbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== الدفتر المالي ===== -->
+  <section class="panel" id="tab-finance" data-panel hidden>
+    <h2>الدفتر المالي <span style="display:flex;gap:.4rem"><b id="ledgerSummary" style="color:#f4d98c"></b><button class="btn btn-gold btn-sm" id="exportLedgerCsvBtn">⬇ CSV</button></span></h2>
+    <form class="row-form" id="ledgerForm">
+      <input id="lgDate" type="date" required />
+      <select id="lgType"><option value="in">وارد (إيراد)</option><option value="out">صادر (مصروف)</option></select>
+      <input id="lgLabel" placeholder="البيان (مثلاً: بيع الدليل)" required style="flex:2;min-width:180px" />
+      <input id="lgAmount" type="number" min="0" step="0.01" placeholder="المبلغ د.م" required style="width:130px" />
+      <button class="btn btn-gold btn-sm" type="submit">+ قيد</button>
+    </form>
+    <div class="table-wrap">
+      <table class="data"><thead><tr><th>التاريخ</th><th>النوع</th><th>البيان</th><th>المبلغ (د.م)</th><th></th></tr></thead><tbody id="ledgerTbody"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ===== خط الأنابيب ===== -->
+  <section class="panel" id="tab-pipeline" data-panel hidden>
+    <h2>خط الأنابيب (Kanban)</h2>
+    <form class="row-form" id="pipeForm">
+      <input id="pipeName" placeholder="اسم العميل/الشركة" required style="flex:2;min-width:180px" />
+      <select id="pipeStage"><option value="new">جديد</option><option value="hot">مهتم</option><option value="won">مغلق ✅</option><option value="lost">خسارة ✗</option></select>
+      <input id="pipeValue" type="number" min="0" step="1" placeholder="القيمة د.م" style="width:120px" />
+      <button class="btn btn-gold btn-sm" type="submit">+ صفقة</button>
+    </form>
+    <div class="pipeline" id="pipelineBoard"></div>
+  </section>
+
+  <!-- ===== مؤشرات الإطلاق ===== -->
+  <section class="panel" id="tab-kpi" data-panel hidden>
+    <h2>أهداف الإطلاق (الأسبوع 1–4)</h2>
+    <div class="note">عدّل القيم المستهدفة حسب خطتك. القيم تزيد تلقائياً من بياناتك المحلية حيث أمكن.</div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>المؤشر</th><th>الهدف</th><th>الحالي (محلي)</th><th>نسبة الإنجاز</th></tr></thead>
+        <tbody id="kpiTargets"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="config.js"></script>
+<script src="assets/dashboard.js"></script>
+</body>
+</html>
