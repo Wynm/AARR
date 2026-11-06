@@ -1,0 +1,37 @@
+# AARR — لقطة مؤشرات أسبوعية تلقائية إلى Supabase
+# تتطلب سرَّين في إعدادات GitHub (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL            مثل: https://rdendsijoowivydpvqho.supabase.co
+#   SUPABASE_SERVICE_KEY    مفتاح service_role (يبقى سرّياً داخل GitHub — لا يُسجَّل في الكود)
+# لا ترسل هذه المهمة أي بريد ولا تنشر أي شيء للعموم — فقط تقرأ العدادات وتكتب لقطة في kpi_snapshots.
+name: weekly-kpi-snapshot
+on:
+  schedule:
+    - cron: "0 8 * * 1"   # كل اثنين 08:00 UTC
+  workflow_dispatch:
+permissions: {}
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Count leads, sum revenue, insert snapshot
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          set -euo pipefail
+          auth=(-H "apikey: ${SUPABASE_SERVICE_KEY}" -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}")
+
+          # عدد العملاء: PostgREST يرجع الترويسة content-range: */123 عند Prefer: count=exact
+          leads_total=$(curl -fsS -D - -o /dev/null -H "Prefer: count=exact" -H "Range: 0-0" \
+            "${auth[@]}" "${SUPABASE_URL}/rest/v1/leads?select=id" \
+            | tr -d '\r' | grep -i '^content-range:' | sed 's#.*/##')
+
+          orders_json=$(curl -fsS "${auth[@]}" "${SUPABASE_URL}/rest/v1/orders?select=amount_mad&status=eq.paid")
+          revenue=$(node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.reduce((a,r)=>a+(+r.amount_mad||0),0))" <<< "$orders_json")
+          orders_paid=$(node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.length)" <<< "$orders_json")
+
+          payload=$(node -e "console.log(JSON.stringify({leads_total:Number(process.argv[1])||0,orders_paid:Number(process.argv[2])||0,revenue_mad:Number(process.argv[3])||0,notes:'auto: weekly-kpi-snapshot'}))" "$leads_total" "$orders_paid" "$revenue")
+
+          curl -fsS -X POST "${SUPABASE_URL}/rest/v1/kpi_snapshots" "${auth[@]}" \
+            -H "Content-Type: application/json" -H "Prefer: return=minimal" -d "$payload"
+          echo "kpi_snapshot inserted: $payload"
